@@ -9,6 +9,9 @@
 {% endblock %}
 
 {% block pageactions %}
+  <div class="btn-group btn-group-sm" role="group" aria-label="...">
+    <button id="restart_failed" type="button" class="btn btn-danger" title="{{_('Restart Failed')}}"><span class="glyphicon glyphicon-refresh"></span></button>
+  </div>
 {% endblock %}
 
 {% block title %}pyLoad - {{_('Dashboard')}}{% endblock %}

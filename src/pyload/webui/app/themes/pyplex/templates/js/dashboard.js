@@ -26,12 +26,22 @@ class EntryManager {
   }
 
   initialize() {
+    $("#restart_failed").click(this.restartFailed);
     this.fetchLinks();
     setInterval(() => this.fetchLinks(), 2500);
     this.ids = [{% for link in content %}
     {{link.id}}{% if not forloop.last %},{% endif %}
     {% endfor %}];
     this.parseFromContent();
+  }
+
+  restartFailed() {
+    indicateLoad();
+    $.get("{{url_for('api.rpc', func='restart_failed')}}", function() {
+      indicateSuccess();
+    }).fail(function () {
+      indicateFail();
+    });
   }
 
   fetchLinks() {
