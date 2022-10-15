@@ -1,0 +1,45 @@
+{% extends theme('base.html') %}
+{% block head %}
+{% endblock %}
+
+{% block footer %}
+<script type="text/javascript" src="{{theme_template('js/packages.js')}}"></script>
+<script type="text/javascript">
+  $(function() {
+      $(".packagename > .name").click(function(event) {
+          $("#add_form").trigger("reset");
+          $("#add_name").val($(this).text());
+          $("#add_box").modal('show');
+      });
+
+      var pUI = new PackageUI({{ target }});
+  });
+</script>
+{% endblock %}
+
+{% block pageactions %}
+  <div class="btn-group btn-group-sm" role="group" aria-label="...">
+    <button id="del_finished" type="button" class="btn btn-danger" title="{{_('Clear Finished')}}"><span class="glyphicon glyphicon-trash"></span>&nbsp;</button>
+    <button id="restart_failed" type="button" class="btn btn-danger" title="{{_('Restart Failed')}}"><span class="glyphicon glyphicon-refresh"></span>&nbsp;</button>
+  </div>
+{% endblock %}
+
+{% block title %}pyLoad - {{_("Links")}}{% endblock %} -->
+{#{% block subtitle %}{{_("Links")}}{% endblock %}#}
+
+{% block content %}
+<ul id="package-list" style="list-style: none; padding-left: 0; margin-top: -10px;">
+{% for package in content %}
+    <li id="package_{{package.pid}}" class="left width100">
+      <div class="left width100">
+        <div class="packagename col-xs-8 col-sm-8 breakWords" style="cursor: pointer">
+          <span class="packageicon glyphicon glyphicon-folder-close" style="margin-right: 5px;"></span>
+          <span class="name" style="font-size: 16px; font-weight: bold;">{{package.name}}</span>
+          <textarea onclick="this.setSelectionRange(0, this.value.length, 'backward')" class="form-control" style="width: 100%; max-width: 600px; height: 225px; margin-top: 10px; margin-bottom: 25px; resize: none;">{% for link in package.links %}{% if not loop.first %}
+{% endif %}{{ link.url }}{% endfor %}</textarea>
+        </div>
+      </div>
+    </li>
+{% endfor %}
+</ul>
+{% endblock %}

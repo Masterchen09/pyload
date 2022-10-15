@@ -62,6 +62,9 @@
     <li ondragstart="return false;" {{selected('collector')}}>
       <a href="{{url_for("app.collector")}}" title="{{_('Packages')}}"><span class="glyphicon glyphicon-magnet"></span></a>
     </li>
+    <li ondragstart="return false;" {{selected('links')}}>
+      <a href="{{url_for("app.links")}}" title="{{_('links')}}"><span class="glyphicon glyphicon-link"></span></a>
+    </li>
     <li ondragstart="return false;" {{selected('files')}}>
       <a href="{{url_for("app.files")}}" title="{{_('Files')}}"><span class="glyphicon glyphicon-file"></span></a>
     </li>
@@ -127,6 +130,9 @@
           </li>
           <li ondragstart="return false;" {{selected('collector')}}>
               <a href="{{url_for("app.collector")}}" title=""><span class="glyphicon glyphicon-magnet"></span><span class="hidden-sm"> {{_('Packages')}}</span></a>
+          </li>
+          <li ondragstart="return false;" {{selected('links')}}>
+              <a href="{{url_for("app.links")}}" title=""> <span class="glyphicon glyphicon-link"></span><span class="hidden-sm"> {{_('Links')}}</span></a>
           </li>
           <li ondragstart="return false;" {{selected('files')}}>
               <a href="{{url_for("app.files")}}" title=""> <span class="glyphicon glyphicon-file"></span><span class="hidden-sm"> {{_('Files')}}</span></a>

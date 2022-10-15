@@ -132,6 +132,17 @@ def collector():
     return render_template("packages.html", content=queue, target=0)
 
 
+@bp.route("/links", endpoint="links")
+@login_required("LIST")
+def links():
+    api = flask.current_app.config["PYLOAD_API"]
+    queue = api.get_collector_data()
+
+    queue.sort(key=operator.attrgetter("order"))
+
+    return render_template("links.html", content=queue, target=0)
+
+
 @bp.route("/files", endpoint="files")
 @login_required("DOWNLOAD")
 def files():
