@@ -126,12 +126,24 @@ class EntryManager {
   }
 
   initialize() {
+    $("#restart_failed").click(this.restartFailed);
     this.fetchLinks();
     this.fetchInterval = setInterval(() => this.fetchLinks(), 1000);
     {% for link in content %}
     this.entries.set({{link.id}}, new LinkEntry({{link.id}}));
     {% endfor %}
     this.parseFromContent();
+  }
+
+  restartFailed() {
+    uiHandler.indicateLoad();
+    $.post("{{url_for('api.rpc', func='restart_failed')}}")
+      .done((data) => {
+        uiHandler.indicateSuccess();
+      })
+      .fail(() => {
+        uiHandler.indicateFail();
+      });
   }
 
   fetchLinks() {
