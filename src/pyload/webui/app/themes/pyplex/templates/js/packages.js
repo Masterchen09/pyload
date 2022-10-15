@@ -81,9 +81,6 @@ class PackageUI {
     uiHandler.indicateLoad();
     $.post("{{url_for('api.rpc', func='restart_failed')}}")
       .done((data) => {
-        if (data.length > 0) {
-          this.packages.forEach(pack => pack.close());
-        }
         uiHandler.indicateSuccess();
       })
       .fail(() => {
