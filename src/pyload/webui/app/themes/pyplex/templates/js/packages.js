@@ -7,6 +7,12 @@ function PackageUI (type){
         this.type = type;
         thisObject = this;
 
+        $(document).keyup(function(event) {
+            if (event.keyCode == 27) {
+                $("#pack_box").modal('hide');
+            }
+        });
+
         $("#del_finished").click(this.deleteFinished);
         $("#restart_failed").click(this.restartFailed);
         this.parsePackages();

@@ -37,6 +37,18 @@ SettingsUI = (function() {
                 indicateFail("{{_('Error occurred')}}");
             });
         });
+
+        $(document).keyup(function(event) {
+            if (event.keyCode == 27) {
+                $("#account_box").modal('hide');
+                $("#path_chooser").modal('hide');
+                $("#restart_box").modal('hide');
+                $("#quit_box").modal('hide');
+                $("#password_box").modal('hide');
+                $('#user_box').modal('hide');
+            }
+        });
+
         let activeTab = sessionStorage.getItem('activeTab');
         if (activeTab) {
             sessionStorage.removeItem('activeTab');
