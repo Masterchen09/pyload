@@ -42,7 +42,9 @@ def rpc(func, args=""):
             "perms" not in s or
             not api.is_authorized(func, {"role": s["role"], "permission": s["perms"]})
     ):
-        return jsonify({'error': "Unauthorized"}), 401
+        response = jsonify({'error': "Unauthorized"})
+        # response.data = response.data[:-1]
+        return response, 401
 
     args = args.split(",")
     if len(args) == 1 and not args[0]:
@@ -58,6 +60,11 @@ def rpc(func, args=""):
         response = call_api(func, *args, **kwargs)
     except Exception as exc:
         response = jsonify(error=str(exc), traceback=traceback.format_exc()), 500
+
+    # if isinstance(response, tuple):
+    #     response[0].data = response[0].data[:-1]
+    # else:
+    #     response.data = response.data[:-1]
 
     return response
 
@@ -89,13 +96,18 @@ def login():
     sanitized_user = user.replace("\n", "\\n").replace("\r", "\\r")
     if not user_info:
         log.error(f"Login failed for user '{sanitized_user}'")
-        return jsonify(False)
+        response = jsonify(False)
+        # response.data = response.data[:-1]
+        return response
 
     s = set_session(user_info)
     log.info(f"User '{sanitized_user}' successfully logged in")
     flask.flash("Logged in successfully")
 
-    return jsonify(s)
+    response = jsonify(True)
+    # response.data = response.data[:-1]
+    response.set_cookie("beaker.session.id", "")
+    return response
 
 
 @bp.route("/api/logout", endpoint="logout")
@@ -106,4 +118,6 @@ def logout():
     clear_session(s)
     if user:
         log.info(f"User '{user}' logged out")
-    return jsonify(True)
+    response = jsonify(True)
+    # response.data = response.data[:-1]
+    return response
