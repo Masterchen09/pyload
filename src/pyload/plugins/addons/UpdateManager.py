@@ -3,6 +3,7 @@
 import operator
 import os
 import re
+import semver
 import sys
 import time
 from datetime import timedelta
@@ -16,7 +17,7 @@ from ..helpers import exists
 class UpdateManager(BaseAddon):
     __name__ = "UpdateManager"
     __type__ = "addon"
-    __version__ = "1.21"
+    __version__ = "1.22"
     __status__ = "testing"
 
     __config__ = [
@@ -179,23 +180,21 @@ class UpdateManager(BaseAddon):
 
         if not newversion:
             exitcode = 0
-
-        elif newversion == self.pyload.api.get_server_version():
-            self.log_info(self._("pyLoad is up to date!"))
-            exitcode = self.update_plugins()
-
-        elif re.search(r"^\d+(?:\.\d+){0,3}[a-z]?$", newversion):
-            self.log_info(
-                self._("***  New pyLoad {} available  ***").format(newversion)
-            )
-            self.log_info(
-                self._(
-                    "***  Get it here: https://github.com/pyload/pyload/releases  ***"
+        elif re.search(r"^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$", newversion):
+            if semver.compare(newversion, self.pyload.api.get_server_version()) == 1:
+                self.log_info(
+                    self._("***  New pyLoad {} available  ***").format(newversion)
                 )
-            )
-            self.info["pyload"] = True
-            exitcode = 3
-
+                self.log_info(
+                    self._(
+                         "***  Get it here: https://github.com/pyload/pyload/releases  ***"
+                    )
+                )
+                self.info["pyload"] = True
+                exitcode = 3
+            else:
+                self.log_info(self._("pyLoad is up to date!"))
+                exitcode = self.update_plugins()
         else:
             exitcode = 0
 
