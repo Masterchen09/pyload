@@ -13,6 +13,7 @@ import os
 import re
 import time
 from enum import IntFlag
+from functools import wraps
 
 from ..datatypes.data import *
 from ..datatypes.enums import *
@@ -48,6 +49,21 @@ def legacy(legacy_name):
             return func
 
     return Wrapper
+
+
+def legacy_kwargs(legacy_kwargs_dict):
+    def decorator(func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            for old_kwarg, new_kwarg in legacy_kwargs_dict.items():
+                if old_kwarg in kwargs and new_kwarg not in kwargs:
+                    kwargs[new_kwarg] = kwargs.pop(old_kwarg)
+
+            return func(*args, **kwargs)
+
+        return wrapper
+
+    return decorator
 
 
 urlmatcher = re.compile(
@@ -178,8 +194,12 @@ class Api:
         :param category:
         :param option:
         :param value: new config value
-        :param section: 'plugin' or 'core
+        :param section: 'plugin' or 'core'
         """
+
+        if category == "reconnect" and option == "activated" and section == "core":
+            option = "enabled"
+
         self.pyload.addon_manager.dispatch_event(
             "config_changed", category, option, value, section
         )
@@ -204,7 +224,12 @@ class Api:
 
         :return: list of `ConfigSection`
         """
-        return self._convert_config_format(self.pyload.config.config)
+        config = self._convert_config_format(self.pyload.config.config)
+        config["reconnect"]["items"].insert(1, config["reconnect"]["items"].pop(next((index for (index, item) in enumerate(config["reconnect"]["items"]) if item["name"] == "enabled"))))
+        config["download"]["items"].insert(0, config["download"]["items"].pop(next((index for (index, item) in enumerate(config["download"]["items"]) if item["name"] == "max_downloads"))))
+        config["download"]["items"].insert(1, config["download"]["items"].pop(next((index for (index, item) in enumerate(config["download"]["items"]) if item["name"] == "limit_speed"))))
+        config["download"]["items"].insert(4, config["download"]["items"].pop(next((index for (index, item) in enumerate(config["download"]["items"]) if item["name"] == "max_speed"))))
+        return config
 
     @legacy("getConfigDict")
     def get_config_dict(self):
@@ -603,6 +628,9 @@ class Api:
         self.pyload.thread_manager.create_result_thread(data, True)
 
     @legacy("getPackageData")
+    @legacy_kwargs({
+        "pid": "package_id",
+    })
     @permission(Perms.LIST)
     def get_package_data(self, package_id):
         """
@@ -630,6 +658,9 @@ class Api:
         return pdata
 
     @legacy("getPackageInfo")
+    @legacy_kwargs({
+        "pid": "package_id",
+    })
     @permission(Perms.LIST)
     def get_package_info(self, package_id):
         """
@@ -658,6 +689,9 @@ class Api:
         return pdata
 
     @legacy("getFileData")
+    @legacy_kwargs({
+        "fid": "file_id",
+    })
     @permission(Perms.LIST)
     def get_file_data(self, file_id):
         """
@@ -675,6 +709,9 @@ class Api:
         return fdata
 
     @legacy("deleteFiles")
+    @legacy_kwargs({
+        "fids": "file_ids",
+    })
     @permission(Perms.DELETE)
     def delete_files(self, file_ids):
         """
@@ -688,6 +725,9 @@ class Api:
         self.pyload.files.save()
 
     @legacy("deletePackages")
+    @legacy_kwargs({
+        "pids": "package_ids",
+    })
     @permission(Perms.DELETE)
     def delete_packages(self, package_ids):
         """
@@ -806,6 +846,9 @@ class Api:
         ]
 
     @legacy("addFiles")
+    @legacy_kwargs({
+        "pid": "package_id",
+    })
     @permission(Perms.ADD)
     def add_files(self, package_id, links):
         """
@@ -824,6 +867,9 @@ class Api:
         self.pyload.files.save()
 
     @legacy("pushToQueue")
+    @legacy_kwargs({
+        "pid": "package_id",
+    })
     @permission(Perms.MODIFY)
     def push_to_queue(self, package_id):
         """
@@ -834,6 +880,9 @@ class Api:
         self.pyload.files.set_package_location(package_id, Destination.QUEUE)
 
     @legacy("pullFromQueue")
+    @legacy_kwargs({
+        "pid": "package_id",
+    })
     @permission(Perms.MODIFY)
     def pull_from_queue(self, package_id):
         """
@@ -844,6 +893,9 @@ class Api:
         self.pyload.files.set_package_location(package_id, Destination.COLLECTOR)
 
     @legacy("restartPackage")
+    @legacy_kwargs({
+        "pid": "package_id",
+    })
     @permission(Perms.MODIFY)
     def restart_package(self, package_id):
         """
@@ -854,6 +906,9 @@ class Api:
         self.pyload.files.restart_package(int(package_id))
 
     @legacy("restartFile")
+    @legacy_kwargs({
+        "fid": "file_id",
+    })
     @permission(Perms.MODIFY)
     def restart_file(self, file_id):
         """
@@ -864,6 +919,9 @@ class Api:
         self.pyload.files.restart_file(int(file_id))
 
     @legacy("recheckPackage")
+    @legacy_kwargs({
+        "pid": "package_id",
+    })
     @permission(Perms.MODIFY)
     def recheck_package(self, package_id):
         """
@@ -886,6 +944,9 @@ class Api:
             pyfile.abort_download()
 
     @legacy("stopDownloads")
+    @legacy_kwargs({
+        "fids": "file_ids",
+    })
     @permission(Perms.MODIFY)
     def stop_downloads(self, file_ids):
         """
@@ -900,6 +961,9 @@ class Api:
                 pyfile.abort_download()
 
     @legacy("setPackageName")
+    @legacy_kwargs({
+        "pid": "package_id",
+    })
     @permission(Perms.MODIFY)
     def set_package_name(self, package_id, name):
         """
@@ -913,6 +977,9 @@ class Api:
         pack.sync()
 
     @legacy("movePackage")
+    @legacy_kwargs({
+        "pid": "package_id",
+    })
     @permission(Perms.MODIFY)
     def move_package(self, destination, package_id):
         """
@@ -929,6 +996,10 @@ class Api:
             self.pyload.files.set_package_location(package_id, dest)
 
     @legacy("moveFiles")
+    @legacy_kwargs({
+        "fids": "file_ids",
+        "pid": "package_id",
+    })
     @permission(Perms.MODIFY)
     def move_files(self, file_ids, package_id):
         """
@@ -961,6 +1032,9 @@ class Api:
         self.add_package(th.name, [th.name], Destination.COLLECTOR)
 
     @legacy("orderPackage")
+    @legacy_kwargs({
+        "pid": "package_id",
+    })
     @permission(Perms.MODIFY)
     def order_package(self, package_id, position):
         """
@@ -972,6 +1046,9 @@ class Api:
         self.pyload.files.reorder_package(package_id, position)
 
     @legacy("orderFile")
+    @legacy_kwargs({
+        "fid": "file_id",
+    })
     @permission(Perms.MODIFY)
     def order_file(self, file_id, position):
         """
@@ -983,6 +1060,9 @@ class Api:
         self.pyload.files.reorder_file(file_id, position)
 
     @legacy("setPackageData")
+    @legacy_kwargs({
+        "pid": "package_id",
+    })
     @permission(Perms.MODIFY)
     def set_package_data(self, package_id, data):
         """
@@ -1041,6 +1121,9 @@ class Api:
         return order
 
     @legacy("getFileOrder")
+    @legacy_kwargs({
+        "pid": "package_id",
+    })
     @permission(Perms.LIST)
     def get_file_order(self, package_id):
         """
