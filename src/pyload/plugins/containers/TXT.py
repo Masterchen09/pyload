@@ -63,7 +63,7 @@ class TXT(BaseContainer):
                 packages[cur_pack].append(link)
 
         #: Empty packages fix
-        for key, value in packages.items():
+        for key, value in list(packages.items()):
             if not value:
                 packages.pop(key, None)
 
