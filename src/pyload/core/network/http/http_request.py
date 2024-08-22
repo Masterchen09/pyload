@@ -233,6 +233,9 @@ class HTTPRequest:
         if "timeout" in options:
             self.c.setopt(pycurl.LOW_SPEED_TIME, int(options["timeout"]))
 
+        if "timeout_speed" in options:
+            self.c.setopt(pycurl.LOW_SPEED_LIMIT, int(options["timeout_speed"]))
+
         if "ssl_verify" in options:
             self._configure_ssl(options["ssl_verify"])
 
