@@ -58,7 +58,8 @@ class BypassCaptcha(BaseAddon):
         with get_request() as req:
 
             #: Raise timeout threshold
-            req.c.setopt(pycurl.LOW_SPEED_TIME, 80)
+            if req.c.getinfo(pycurl.LOW_SPEED_TIME) < 80:
+                req.c.setopt(pycurl.LOW_SPEED_TIME, 80)
 
             res = self.load(
                 self.SUBMIT_URL,

@@ -68,7 +68,8 @@ class ImageTyperz(BaseAddon):
     def submit(self, captcha, captcha_type="file", match=None):
         with get_request() as req:
             #: Raise timeout threshold
-            req.c.setopt(pycurl.LOW_SPEED_TIME, 80)
+            if req.c.getinfo(pycurl.LOW_SPEED_TIME) < 80:
+                req.c.setopt(pycurl.LOW_SPEED_TIME, 80)
 
             # NOTE: Workaround multipart-post bug in HTTPRequest.py
             if re.match(r"^\w*$", self.config.get("password")):
