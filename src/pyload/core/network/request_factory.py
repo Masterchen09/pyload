@@ -108,6 +108,8 @@ class RequestFactory:
             "ipv6": self.pyload.config.get("download", "ipv6"),
             "ssl_verify": self.pyload.config.get("general", "ssl_verify"),
             "max_redirect": self.pyload.config.get_plugin("UserAgentSwitcher", "maxredirs"),
+            "timeout": self.pyload.config.get("download", "timeout"),
+            "timeout_speed": self.pyload.config.get("download", "timeout_speed"),
         }
 
     def update_bucket(self):
