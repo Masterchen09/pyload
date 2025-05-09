@@ -207,6 +207,14 @@ $(() => {
     }
   });
 
+  $(document).keyup(function(event) {
+    if (event.keyCode == 27) {
+      $("#yesno_box").modal('hide');
+      $("#add_box").modal('hide');
+      $('#cap_box').modal('hide');
+    }
+  });
+
   $(".action_add").click(() => {
     $("#add_form").trigger("reset");
   });

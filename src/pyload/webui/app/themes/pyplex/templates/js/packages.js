@@ -10,6 +10,13 @@ class PackageUI {
   initialize() {
     $("#del_finished").click(() => this.deleteFinished());
     $("#restart_failed").click(() => this.restartFailed());
+
+    $(document).keyup(function(event) {
+      if (event.keyCode == 27) {
+        $("#pack_box").modal('hide');
+      }
+    });
+
     this.parsePackages();
   }
 
