@@ -593,8 +593,6 @@ const formToObject = (form) => {
       value = $el.val();
     }
 
-    if (!value && value !== "") return;
-
     obj[name] = value
   });
 
