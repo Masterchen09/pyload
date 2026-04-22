@@ -238,7 +238,7 @@ class UIHandler {
     const allowedExts = ["ccf", "dlc","rsdf", "torrent", "txt"];
     const $overlay = $(
       '<div id="container_drop_overlay">' +
-        '<div class="container_drop_overlay_message">' +
+        '<div class="container_drop_overlay_message" style="color: #fff">' +
           "{{_('Drop container file to add to queue')}}" +
         "</div>" +
       "</div>"
@@ -249,7 +249,7 @@ class UIHandler {
       opacity: 0,
       transition: "opacity 0.25s ease-in-out",
       background: "rgba(23, 84, 31, 0.8)",
-      zIndex: 99999,
+      "z-index": 100012,
       pointerEvents: "none",
       textAlign: "center",
       color: "#fff",
