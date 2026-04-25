@@ -39,6 +39,8 @@ def local_check(func):
                 if is_loopback_request(check_source=False):
                     return func(*args, **kwargs)
 
+        api = flask.current_app.config["PYLOAD_API"]
+        api.pyload.log.error("Refusing Connection")
         return "Forbidden", 403
 
     return wrapper
