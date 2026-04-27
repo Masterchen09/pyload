@@ -1159,6 +1159,8 @@ class Api:
         for key, value in data.items():
             if key == "id":
                 continue
+            elif key == "_folder":
+                value = secure_filename(value)
             setattr(p, key, value)
 
         p.sync()
