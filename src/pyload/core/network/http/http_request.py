@@ -179,7 +179,7 @@ class HTTPRequest:
             self.c.setopt(pycurl.PROXY, proxy["host"])
             self.c.setopt(pycurl.PROXYPORT, int(proxy["port"]))
             if proxy_type in ("http", "https"):
-                self.http_proxy_host = proxy["host"]
+                self.http_proxy_host = (proxy["host"], int(proxy["port"]))
 
             if proxy["username"]:
                 user = proxy["username"]
@@ -600,7 +600,7 @@ class HTTPRequest:
         This runs for the initial request AND every redirect follow.
         """
         if not self.allow_private_ip:
-            is_proxy_ip = self.http_proxy_host and conn_primary_ip == self.http_proxy_host
+            is_proxy_ip = self.http_proxy_host and self.http_proxy_host == (conn_primary_ip, conn_primary_port)
 
             if not is_global_address(conn_primary_ip) and not is_proxy_ip:
                 return pycurl.PREREQFUNC_ABORT
