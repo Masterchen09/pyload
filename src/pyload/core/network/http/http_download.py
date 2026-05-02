@@ -4,14 +4,15 @@ import urllib
 from logging import getLogger
 
 import pycurl
+
 from pyload import APPID
 
 from ..exceptions import Abort, Fail
-from .http_chunk import ChunkInfo, HTTPChunk
-from .http_request import BadHeader
+from .exceptions import BadHeader
+from .http_chunk import ChunkInfo, ChunkManager, HTTPChunk
 
 
-class HTTPDownload:
+class HTTPDownload(ChunkManager):
     """
     loads a url http + ftp.
     """
@@ -85,42 +86,13 @@ class HTTPDownload:
         return (self.arrived * 100) // self.size
 
     def _copy_chunks(self):
-        init = self.info.get_chunk_filename(0)  #: initial chunk name
-
-        if self.info.get_count() > 1:
-            with open(init, mode="rb+") as fo:  #: first chunk file
-                for i in range(1, self.info.get_count()):
-                    #: input file
-                    #: seek to beginning of chunk, to get rid of overlapping chunks
-                    fo.seek(self.info.get_chunk_range(i - 1)[1] + 1)
-                    fname = f"{self.filename}.chunk{i}"
-                    with open(fname, mode="rb") as fi:
-                        buffer_size = 32 << 10
-                        while True:  #: copy in chunks, consumes less memory
-                            data = fi.read(buffer_size)
-                            if not data:
-                                break
-                            fo.write(data)
-                    if fo.tell() < self.info.get_chunk_range(i)[1]:
-                        fo.close()
-                        os.remove(init)
-                        self.info.remove()  #: there are probably invalid chunks
-                        raise Exception(
-                            "Downloaded content was smaller than expected. Try to reduce download connections."
-                        )
-                    os.remove(fname)  #: os.remove chunk
-
+        """Merge chunks with disposition filename handling."""
         if self.name_disposition and self.disposition:
             self.filename = os.path.join(
                 os.path.dirname(self.filename), self.name_disposition
             )
 
-        try:
-            os.remove(self.filename)
-        except FileNotFoundError:
-            pass
-        os.rename(init, self.filename)
-        self.info.remove()  #: os.remove info file
+        self.merge_chunks(self.filename, self.info, self.size)
 
     def download(self, chunks=1, resume=False):
         """
