@@ -125,6 +125,7 @@ class HTTPChunk(HTTPRequest):
 
         self.code = 0  #: last http code, set by parent
 
+        self.http_proxy_host = None
         self.allow_private_ip = False
         self.aborted = False  # indicates that the chunk aborted gracefully
 
