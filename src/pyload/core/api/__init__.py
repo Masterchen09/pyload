@@ -261,12 +261,8 @@ class Api:
         if section == "core":
             if category == "general" and option == "storage_folder":
                 # Forbid setting the download folder inside dangerous locations
-                correct_case = lambda x: x.lower() if os.name == "nt" else x
-                directories = [
-                    correct_case(os.path.join(os.path.realpath(d), ""))
-                    for d in [value, PKGDIR, self.pyload.userdir]
-                ]
-                if any(directories[0].startswith(d) for d in directories[1:]):
+                blocked_dirs = [PKGDIR, self.pyload.userdir]
+                if any(fs.is_within_directory(d, value) for d in blocked_dirs):
                     return
 
             # Require ADMIN role for security-critical settings
