@@ -148,6 +148,9 @@ class Api:
         self.pyload = core
         self._ = core._
 
+        # API key cache
+        self._apikey_cache = {}  # Format: {key_id: (timestamp, data)}
+
     def _required_http_method_for_api(self, func_name: str) -> Optional[str]:
         """
         Get the allowed HTTP method for an API method
@@ -1623,6 +1626,16 @@ class Api:
         """
         deletes a user login.
         """
+        user_id = self.pyload.db.get_user_id(user)
+        if user_id:
+            # Remove all cache entries where the cached_data has matching user_id
+            keys_to_delete = [
+                key_id for key_id, (_, data) in self._apikey_cache.items()
+                if data.get("user_id") == user_id
+            ]
+            for key_id in keys_to_delete:
+                del self._apikey_cache[key_id]
+
         return self.pyload.db.remove_user(user)
 
     @legacy("changePassword")
@@ -1715,14 +1728,19 @@ class Api:
                 "error": "Invalid username",
             }
         else:
+            result = self.pyload.db.delete_user_apikey(user_id, key_id)
+            if result:
+                self._apikey_cache.pop(key_id, None)  # remove from cache
+
             return {
-                "success": self.pyload.db.delete_user_apikey(user_id, key_id),
+                "success": result,
             }
 
-    def check_apikey(self, apikey: str) -> dict[str, Any]:
+    def check_apikey(self, apikey: str, ttl: int = 5 * 60) -> dict[str, Any]:
         """
-        Validates an API key.
+        Validates an API key with caching for improved performance.
         :param apikey: API key to validate
+        :param ttl: API key cache TTL in seconds (0 = no cache)
         :return: dict with `data` as the API key info
         """
         if (
@@ -1737,15 +1755,47 @@ class Api:
             }
 
         key_id = int(apikey[4:4 + int(apikey[3])])
+
+        now = int(time.time() * 1000)
+
+        # Check cache first (skip if ttl is 0)
+        if ttl > 0 and key_id in self._apikey_cache:
+            cache_time, cached_data = self._apikey_cache[key_id]
+            if now - cache_time < ttl * 1000:
+                # Cache hit - verify expiration in case key expired during cache window
+                expires_at = cached_data["expires_at"]
+                if 0 < expires_at <= now:
+                    # Key expired, remove from cache and fail
+                    del self._apikey_cache[key_id]
+                    return {
+                        "success": False,
+                        "error": "API key has expired",
+                    }
+
+                else:
+                    # Cache hit - return cached data
+                    return {
+                        "success": True,
+                        "data": cached_data,
+                    }
+            else:
+                # Cache expired - remove it
+                del self._apikey_cache[key_id]
+
+        # Cache miss - query database
         key_data = self.pyload.db.check_apikey(key_id, apikey[-43:])
         if not key_data:
             return {
                 "success": False,
                 "error": "Invalid or expired API key",
             }
-        else:
-            self.pyload.db.update_apikey_last_used(key_id)
-            return {
-                "success": True,
-                "data": key_data,
-            }
+
+        # Cache the successful validation result (only if ttl > 0)
+        if ttl > 0:
+            self._apikey_cache[key_id] = (now, key_data)
+
+        self.pyload.db.update_apikey_last_used(key_id)
+        return {
+            "success": True,
+            "data": key_data,
+        }
