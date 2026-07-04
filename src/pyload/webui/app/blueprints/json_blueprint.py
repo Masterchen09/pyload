@@ -1,18 +1,20 @@
 import os
 import sys
 from functools import wraps
+from logging import getLogger
 
 import flask
 from flask.json import jsonify
 from werkzeug.utils import secure_filename
 
+from pyload import APPID
 from pyload.core.api import Role
 from pyload.core.utils import format, fs
 
 from ..helpers import clear_all_user_sessions, get_permission, login_required, permlist, render_template, set_permission
 
 bp = flask.Blueprint("json", __name__)
-
+log = getLogger(APPID)
 
 def expect_json(f):
     """
@@ -52,6 +54,8 @@ def expect_json(f):
 # @apiver_check
 @login_required("LIST")
 def status():
+    log.debug(f"JSON call: status() [METHOD: {flask.request.method}]")
+
     api = flask.current_app.config["PYLOAD_API"]
     data = api.status_server()
     return jsonify(data)
@@ -61,6 +65,8 @@ def status():
 # @apiver_check
 @login_required("LIST")
 def links():
+    log.debug(f"JSON call: links() [METHOD: {flask.request.method}]")
+
     api = flask.current_app.config["PYLOAD_API"]
     try:
         links = api.status_downloads()
@@ -91,6 +97,8 @@ def links():
 # @apiver_check
 @login_required("LIST")
 def package():
+    log.debug(f"JSON call: package() [METHOD: {flask.request.method}]")
+    
     api = flask.current_app.config["PYLOAD_API"]
     try:
         id = int(flask.request.args.get('id'))
@@ -110,6 +118,8 @@ def package():
 @login_required("MODIFY")
 @expect_json
 def package_order(pack_id, pos):
+    log.debug(f"JSON call: package_order() [METHOD: {flask.request.method}]")
+
     api = flask.current_app.config["PYLOAD_API"]
     try:
         api.order_package(int(pack_id), int(pos))
@@ -124,6 +134,8 @@ def package_order(pack_id, pos):
 @login_required("MODIFY")
 @expect_json
 def abort_link(link_id):
+    log.debug(f"JSON call: abort_link() [METHOD: {flask.request.method}]")
+
     api = flask.current_app.config["PYLOAD_API"]
     try:
         api.stop_downloads([link_id])
@@ -138,6 +150,8 @@ def abort_link(link_id):
 @login_required("MODIFY")
 @expect_json
 def link_order(file_id, pos):
+    log.debug(f"JSON call: link_order() [METHOD: {flask.request.method}]")
+
     api = flask.current_app.config["PYLOAD_API"]
     try:
         api.order_file(int(file_id), int(pos))
@@ -151,6 +165,8 @@ def link_order(file_id, pos):
 # @apiver_check
 @login_required("ADD")
 def add_package():
+    log.debug(f"JSON call: add_package() [METHOD: {flask.request.method}]")
+
     api = flask.current_app.config["PYLOAD_API"]
 
     package_name = flask.request.form.get("add_name", "New Package").strip()
@@ -189,6 +205,8 @@ def add_package():
 @login_required("MODIFY")
 @expect_json
 def move_package(pack_id, dest):
+    log.debug(f"JSON call: move_package() [METHOD: {flask.request.method}]")
+
     api = flask.current_app.config["PYLOAD_API"]
     try:
         api.move_package(dest, pack_id)
@@ -203,6 +221,8 @@ def move_package(pack_id, dest):
 @login_required("MODIFY")
 @expect_json
 def edit_package(pack_id, pack_name, pack_folder, pack_pwd):
+    log.debug(f"JSON call: edit_package() [METHOD: {flask.request.method}]")
+
     api = flask.current_app.config["PYLOAD_API"]
     try:
         pack_folder = secure_filename(pack_folder)
@@ -223,6 +243,8 @@ def edit_package(pack_id, pack_name, pack_folder, pack_pwd):
 # @apiver_check
 @login_required("STATUS")
 def set_captcha():
+    log.debug(f"JSON call: set_captcha() [METHOD: {flask.request.method}]")
+
     api = flask.current_app.config["PYLOAD_API"]
 
     if flask.request.method == "POST":
@@ -248,6 +270,8 @@ def set_captcha():
 # @apiver_check
 @login_required("SETTINGS")
 def load_config():
+    log.debug(f"JSON call: load_config() [METHOD: {flask.request.method}]")
+
     category = flask.request.args.get('category')
     section = flask.request.args.get('section')
     if category not in ("core", "plugin") or not section:
@@ -275,6 +299,8 @@ def load_config():
 @login_required("SETTINGS")
 @expect_json
 def save_config(category, config):
+    log.debug(f"JSON call: save_config() [METHOD: {flask.request.method}]")
+
     api = flask.current_app.config["PYLOAD_API"]
     if category not in ("core", "plugin"):
         return jsonify(False), 500
@@ -296,6 +322,8 @@ def save_config(category, config):
 @expect_json
 # @fresh_login_required
 def add_account(account_login, account_password, account_type):
+    log.debug(f"JSON call: add_account() [METHOD: {flask.request.method}]")
+
     api = flask.current_app.config["PYLOAD_API"]
     if account_login:
         api.update_account(account_type, account_login, account_password)
@@ -310,6 +338,8 @@ def add_account(account_login, account_password, account_type):
 @login_required("ACCOUNTS")
 # @fresh_login_required
 def update_accounts():
+    log.debug(f"JSON call: update_accounts() [METHOD: {flask.request.method}]")
+
     deleted = []  #: don't update deleted accounts, or they will be created again
     updated = {}
     api = flask.current_app.config["PYLOAD_API"]
@@ -355,6 +385,8 @@ def update_accounts():
 @login_required("ADMIN")
 @expect_json
 def change_password(user_login, user_curpw, user_newpw):
+    log.debug(f"JSON call: change_password() [METHOD: {flask.request.method}]")
+
     api = flask.current_app.config["PYLOAD_API"]
     done = api.change_password(user_login, user_curpw, user_newpw)
     if not done:
@@ -368,6 +400,8 @@ def change_password(user_login, user_curpw, user_newpw):
 @login_required("ADMIN")
 # @fresh_login_required
 def add_user():
+    log.debug(f"JSON call: add_user() [METHOD: {flask.request.method}]")
+
     api = flask.current_app.config["PYLOAD_API"]
 
     user = flask.request.form["new_user"]
@@ -393,6 +427,8 @@ def add_user():
 @login_required("ADMIN")
 @expect_json
 def update_users(update_data):
+    log.debug(f"JSON call: update_users() [METHOD: {flask.request.method}]")
+
     api = flask.current_app.config["PYLOAD_API"]
 
     all_users = api.get_all_userdata()
@@ -449,6 +485,8 @@ def update_users(update_data):
 @login_required("ADMIN")
 @expect_json
 def get_apikeys(*, user=None):
+    log.debug(f"JSON call: get_apikeys() [METHOD: {flask.request.method}]")
+
     api = flask.current_app.config["PYLOAD_API"]
     user = user or flask.session["name"]
     return jsonify(api.get_apikeys(user))
@@ -457,6 +495,8 @@ def get_apikeys(*, user=None):
 @login_required("ADMIN")
 @expect_json
 def generate_apikey(*, user, password, name, expires):
+    log.debug(f"JSON call: generate_apikey() [METHOD: {flask.request.method}]")
+
     api = flask.current_app.config["PYLOAD_API"]
     return jsonify(api.generate_apikey(user, password, name, expires))
 
@@ -464,5 +504,7 @@ def generate_apikey(*, user, password, name, expires):
 @login_required("ADMIN")
 @expect_json
 def delete_apikey(*, user, key):
+    log.debug(f"JSON call: delete_apikey() [METHOD: {flask.request.method}]")
+
     api = flask.current_app.config["PYLOAD_API"]
     return jsonify(api.delete_apikey(user, key))
