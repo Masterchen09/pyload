@@ -23,6 +23,8 @@ log = getLogger(APPID)
 # @apiver_check
 @apikey_auth
 def rpc(func, args=""):
+    log.debug(f"API call: {func}({args}) [METHOD: {flask.request.method}]")
+
     if func.startswith("_"):
         flask.flash(f"Invalid API call '{func}'")
         return jsonify({'error': "Forbidden"}), 403
