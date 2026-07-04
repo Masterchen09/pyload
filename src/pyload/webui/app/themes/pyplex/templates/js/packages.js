@@ -208,14 +208,14 @@ class Package {
         $('<span>', {
           class: 'glyphicon glyphicon-trash',
           title: 'Delete Link',
-          style: 'cursor: pointer; font-size: 12px; color:#333;'
+          style: 'cursor: pointer; font-size: 12px; color:#eee;'
         }),
         `${nbsp}${nbsp}`,
         // Restart Button
         $('<span>', {
           class: 'glyphicon glyphicon-repeat',
           title: 'Restart Link',
-          style: 'cursor: pointer; font-size: 12px; color:#333;'
+          style: 'cursor: pointer; font-size: 12px; color:#eee;'
         })
       );
 
@@ -225,7 +225,7 @@ class Package {
           "padding-left": "30px",
           "cursor": "grab"
         })
-        .addClass("child").append($firstRow, '<br>', $secondRow);
+        .addClass("child").append($firstRow, $secondRow);
 
       $li.append($container);
       $ul.append($li);
