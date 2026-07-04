@@ -74,41 +74,43 @@ class OpenAPISpecificationGenerator:
             return self.spec
 
         for name, method in inspect.getmembers(self.api, predicate=inspect.ismethod):
-            rest_method = self.api._required_http_method_for_api(name)
-            if name.startswith('_') or name in legacy_map.values() or rest_method is None:
-                continue
+            rest_methods = self.api._required_http_method_for_api(name)
+            for rest_method in rest_methods:
+                if name.startswith('_') or name in legacy_map.values() or rest_method is None:
+                    continue
 
-            docstring = inspect.getdoc(method) or "No documentation available"
-            docstring_lines = docstring.split("\n")
+                docstring = inspect.getdoc(method) or "No documentation available"
+                docstring_lines = docstring.split("\n")
 
-            summary = docstring.split(":param", 1)[0].split(":return", 1)[0].replace("\n", " ").strip()
+                summary = docstring.split(":param", 1)[0].split(":return", 1)[0].replace("\n", " ").strip()
 
-            operation: dict[str, Any] = {
-                "summary": summary,
-                "description": summary,
-                "tags": ["pyLoad REST"]
-            }
+                operation: dict[str, Any] = {
+                    "summary": summary,
+                    "description": summary,
+                    "tags": ["pyLoad REST"]
+                }
 
-            method_params = dict(inspect.signature(method).parameters)
-            method_params.pop("self", None)
+                method_params = dict(inspect.signature(method).parameters)
+                method_params.pop("self", None)
 
-            if method_params:
-                if all(self._is_primitive_type(param_type.annotation) for param_type in method_params.values()):
-                    query_params = self._build_request_with_query_params(docstring_lines, method_params)
-                    operation.update({
-                        "parameters": query_params,
-                    })
-                elif rest_method == "POST":
-                    request_body = self._build_post_request_with_request_body(docstring_lines, method_params)
-                    operation.update(request_body)
-                else:
-                    raise ValueError(f"REST method {name}() with non primitive types, POST method expected but {rest_method} specified")
+                if method_params:
+                    if all(self._is_primitive_type(param_type.annotation) for param_type in method_params.values()):
+                        query_params = self._build_request_with_query_params(docstring_lines, method_params)
+                        operation.update({
+                            "parameters": query_params,
+                        })
+                    elif rest_method == "POST":
+                        request_body = self._build_post_request_with_request_body(docstring_lines, method_params)
+                        operation.update(request_body)
+                    else:
+                        raise ValueError(f"REST method {name}() with non primitive types, POST method expected but {rest_method} specified")
 
-            response = self._build_response(docstring_lines, method)
-            operation.update({
-                "responses": {"200": response}
-            })
-            self.spec["paths"][f"/api/{name}"] = {rest_method.lower(): operation}
+                response = self._build_response(docstring_lines, method)
+                operation.update({
+                    "responses": {"200": response}
+                })
+                setdefault(self.spec["paths"], f"/api/{name}", {})
+                self.spec["paths"][f"/api/{name}"][rest_method.lower()] = operation
 
         self._remove_additional_properties_keys()  #: so python will generate the same output for every python v3.x
 

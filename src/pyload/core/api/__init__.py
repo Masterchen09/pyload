@@ -42,7 +42,7 @@ legacy_map = {}
 
 # contains function names mapped to their allowed HTTP method (e.g., 'GET', 'POST', 'PUT', 'DELETE')
 # unlisted functions are not exported
-method_map = {}
+methods_map = {}
 
 
 def legacy(legacy_name):
@@ -115,7 +115,8 @@ def legacy(legacy_name: str) -> Callable:
 def http_method(method_type: str) -> Callable:
     class Wrapper:
         def __new__(cls, func, *args, **kwargs):
-            method_map[func.__name__] = method_type.upper()
+            methods_map.setdefault(func.__name__, set())
+            methods_map[func.__name__].add(method_type.upper())
             return func
 
     return Wrapper
@@ -126,6 +127,9 @@ get = http_method("GET")
 post = http_method("POST")
 put = http_method("PUT")
 delete = http_method("DELETE")
+
+legacy_get = http_method("GET")
+legacy_post = http_method("POST")
 
 
 def has_permission(user_perms: Perms, required_perms: Perms):
@@ -163,9 +167,9 @@ class Api:
             if permissions is not None:
                 perm_map[legacy_name] = permissions
 
-            allowed_method = method_map.get(func_name)
-            if allowed_method is not None:
-                method_map[legacy_name] = allowed_method
+            allowed_methods = methods_map.get(func_name)
+            if allowed_methods is not None:
+                methods_map[legacy_name] = allowed_methods
 
         return obj
 
@@ -176,14 +180,14 @@ class Api:
         # API key cache
         self._apikey_cache = {}  # Format: {key_id: (timestamp, data)}
 
-    def _required_http_method_for_api(self, func_name: str) -> Optional[str]:
+    def _required_http_method_for_api(self, func_name: str) -> Optional[set[str]]:
         """
         Get the allowed HTTP method for an API method
 
         :param func_name: the name of the API method
         :return: allowed HTTP method (e.g., 'GET', 'POST', 'PUT', 'DELETE') for the API method or None
         """
-        return method_map.get(func_name)
+        return methods_map.get(func_name)
 
     def _convert_py_file(self, p) -> FileData:
         f = FileData(
@@ -371,6 +375,7 @@ class Api:
 
     @legacy("pauseServer")
     @permission(Perms.STATUS)
+    @legacy_get
     @post
     def pause_server(self) -> None:
         """
@@ -380,6 +385,7 @@ class Api:
 
     @legacy("unpauseServer")
     @permission(Perms.STATUS)
+    @legacy_get
     @post
     def unpause_server(self) -> None:
         """
@@ -477,6 +483,7 @@ class Api:
         """
         self.pyload._do_exit = True
 
+    @legacy_get
     @post
     def restart(self) -> None:
         """
@@ -777,6 +784,7 @@ class Api:
     })
     @permission(Perms.LIST)
     @get
+    @legacy_post
     def get_package_data(self, package_id: int) -> PackageData:
         """
         Returns complete information about package, and included files.
@@ -1094,6 +1102,7 @@ class Api:
 
     @legacy("stopAllDownloads")
     @permission(Perms.MODIFY)
+    @legacy_get
     @post
     def stop_all_downloads(self) -> None:
         """
@@ -1143,6 +1152,7 @@ class Api:
         "pid": "package_id",
     })
     @permission(Perms.MODIFY)
+    @legacy_get
     @post
     def move_package(self, destination: Destination, package_id: int) -> None:
         """
@@ -1255,6 +1265,7 @@ class Api:
 
     @legacy("deleteFinished")
     @permission(Perms.DELETE)
+    @legacy_get
     @post
     def delete_finished(self) -> list[int]:
         """
@@ -1266,6 +1277,7 @@ class Api:
 
     @legacy("restartFailed")
     @permission(Perms.MODIFY)
+    @legacy_get
     @post
     def restart_failed(self) -> None:
         """

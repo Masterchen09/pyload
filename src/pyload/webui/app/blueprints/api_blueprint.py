@@ -37,7 +37,7 @@ def rpc(func, args=""):
         return jsonify({'error': "Not Found"}), 404
 
     actual = flask.request.method
-    if actual != expected:
+    if actual not in expected:
         err_message = f"Method not allowed in API {func}(): Expected {expected}, got {actual}"
         log.error(err_message)
         return jsonify({'error': err_message}), 405
