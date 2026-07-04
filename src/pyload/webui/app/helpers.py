@@ -393,7 +393,6 @@ def apikey_auth(func):
             # No API auth - still use the decorated function but rely on session auth
             s = flask.session
             if is_authenticated(s):
-                csrf.protect()
                 user_info = {
                     "id": s["id"],
                     "name": s["name"],

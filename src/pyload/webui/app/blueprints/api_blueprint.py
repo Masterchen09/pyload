@@ -11,7 +11,7 @@ from flask.json import jsonify
 from pyload import APPID
 
 from ..api_docs.openapi_specification_generator import OpenAPISpecificationGenerator
-from ..helpers import apikey_auth, csrf_exempt, is_authenticated
+from ..helpers import apikey_auth, clear_session, csrf_exempt, is_authenticated, set_session
 
 bp = flask.Blueprint("api", __name__)
 log = getLogger(APPID)
@@ -152,10 +152,42 @@ def swagger_ui():
 @csrf_exempt
 # @apiver_check
 def login():
-    return "Obsolete API", 404
+    log.debug(f"API call: login() [METHOD: {flask.request.method}]")
+
+    user = flask.request.form["username"]
+    password = flask.request.form["password"]
+
+    api = flask.current_app.config["PYLOAD_API"]
+    user_info = api.check_auth(user, password)
+
+    if flask.request.headers.get("X-Forwarded-For"):
+        client_ip = flask.request.headers.get("X-Forwarded-For").split(',')[0].strip()
+    else:
+        client_ip = flask.request.remote_addr
+
+    sanitized_user = user.replace("\n", "\\n").replace("\r", "\\r")
+    if not user_info:
+        log.error(f"Login failed for user '{sanitized_user}'")
+        return jsonify(False)
+
+    s = set_session(user_info)
+    log.info(f"User '{sanitized_user}' successfully logged in [CLIENT: {client_ip}]")
+    flask.flash("Logged in successfully")
+
+    response = jsonify(True)
+    response.set_cookie("beaker.session.id", "")
+    return response
 
 
 @bp.route("/api/logout", endpoint="logout")
 # @apiver_check
+@csrf_exempt
 def logout():
-    return "Obsolete API", 404
+    log.debug(f"API call: logout() [METHOD: {flask.request.method}]")
+
+    s = flask.session
+    user = s.get("name")
+    clear_session(s)
+    if user:
+        log.info(f"User '{user}' logged out")
+    return jsonify(True)
