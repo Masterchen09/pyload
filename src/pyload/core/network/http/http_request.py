@@ -103,7 +103,6 @@ class HTTPRequest:
 
         self.c.setopt(pycurl.WRITEFUNCTION, self._write_body_callback)
         self.c.setopt(pycurl.HEADERFUNCTION, self._write_header_callback)
-        self.c.setopt(pycurl.PREREQFUNCTION, self._pre_request_callback)
 
         self.log = getLogger(APPID)
 
@@ -662,28 +661,6 @@ class HTTPRequest:
 
         if self._header_buffer.endswith(b"\r\n\r\n"):
             self.response_headers.parse(self._header_buffer)
-
-    def _pre_request_callback(self, conn_primary_ip, conn_local_ip, conn_primary_port, conn_local_port):
-        """
-        Called after TCP/TLS connection is established, before request is sent.
-        This runs for the initial request AND every redirect follow.
-
-        Parameters:
-            conn_primary_ip (str): Remote IP address
-            conn_local_ip (str): Local IP address
-            conn_primary_port (int): Remote port
-            conn_local_port (int): Local port
-
-        Returns:
-            pycurl.PREREQFUNC_OK or pycurl.PREREQFUNC_ABORT
-        """
-        if not self.allow_private_ip:
-            is_proxy_ip = self.http_proxy_host and self.http_proxy_host == (conn_primary_ip, conn_primary_port)
-
-            if not is_global_address(conn_primary_ip) and not is_proxy_ip:
-                return pycurl.PREREQFUNC_ABORT
-
-        return pycurl.PREREQFUNC_OK
 
     def add_header(self, name, value):
         """
