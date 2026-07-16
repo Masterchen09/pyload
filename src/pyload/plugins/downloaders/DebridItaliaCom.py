@@ -9,7 +9,7 @@ class DebridItaliaCom(MultiDownloader):
     __version__ = "0.26"
     __status__ = "testing"
 
-    __pattern__ = r"https?://(?:www\.|s\d+\.)?debriditalia\.com/dl/\d+"
+    __pattern__ = r"^unmatchable$"
     __config__ = [
         ("enabled", "bool", "Activated", True),
         ("use_premium", "bool", "Use premium account if available", True),

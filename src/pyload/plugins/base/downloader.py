@@ -395,9 +395,9 @@ class BaseDownloader(BaseHoster):
                 self.error(self._("No file downloaded"))
 
         elif self.scan_download({"Empty file": _is_empty_file}):
-            if self.remove(self.last_download):
+            if self.remove(self.last_download, try_trash=False):
                 self.last_download = ""
-            self.error(self._("Empty file"))
+            self.retry(5, 3, self._("Empty file"))
 
         else:
             self.pyload.addon_manager.dispatch_event("download_check", self.pyfile)

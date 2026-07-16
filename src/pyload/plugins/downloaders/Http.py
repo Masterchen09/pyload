@@ -93,11 +93,27 @@ class Http(BaseDownloader):
                 "Request error": re.compile(
                     rb"([Aa]n error occured while processing your request)"
                 ),
+                "Free error 404 for Website Template": re.compile(
+                    rb"(Free error 404 for Website Template)"
+                ),
+                "Bandwidth limit reached": re.compile(
+                    rb"(Bandwidth limit reached)"
+                ),
             }
         )
 
         if not errmsg:
             return
+
+        if errmsg == "Free error 404 for Website Template":
+            if self.remove(self.last_download, try_trash=False):
+                self.last_download = ""
+            self.retry(5, 3, self._("Empty file"));
+
+        if errmsg == "Bandwidth limit reached":
+            if self.remove(self.last_download, try_trash=False):
+                self.last_download = ""
+            self.error(errmsg)
 
         try:
             errmsg += " | " + self.last_check.group(1).strip()
